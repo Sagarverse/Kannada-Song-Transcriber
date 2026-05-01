@@ -7,5 +7,5 @@ mlruns/
 *.mp3
 *.wav
 *.lrc
-*.txt
+!requirements.txt
 .env
