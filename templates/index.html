@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kannada Lyric Transcriber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+Kannada:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans Kannada', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .upload-area {
+            transition: all 0.3s ease;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+        .upload-area:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.05);
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4 gradient-text">ಕನ್ನಡ ಲಿರಿಕ್ ಟ್ರಾನ್ಸ್‌ಕ್ರೈಬರ್</h1>
+            <p class="text-slate-400 text-lg">AI-powered Kannada song transcription with precise timestamps.</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="space-y-8">
+            <!-- Upload Section -->
+            <section id="upload-section" class="glass p-8">
+                <div id="drop-zone" class="upload-area rounded-xl p-12 text-center cursor-pointer">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                    </svg>
+                    <p class="text-xl font-semibold mb-2">Upload Audio File</p>
+                    <p class="text-slate-400 mb-6">MP3 or WAV songs</p>
+                    <input type="file" id="file-input" class="hidden" accept=".mp3,.wav,.m4a">
+                    <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        Select File
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <section id="loading-state" class="hidden glass p-12 text-center">
+                <div class="flex flex-col items-center">
+                    <div class="spinner mb-4"></div>
+                    <p class="text-xl font-semibold">Transcribing song...</p>
+                    <p class="text-slate-400 mt-2">This may take a minute depending on the song length.</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Transcription Results</h2>
+                    <div class="flex gap-4">
+                        <a id="download-lrc" href="#" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .LRC
+                        </a>
+                        <a id="download-txt" href="#" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .TXT
+                        </a>
+                    </div>
+                </div>
+                <div id="lyrics-container" class="glass p-8 max-h-[500px] overflow-y-auto space-y-4">
+                    <!-- Lyrics will be injected here -->
+                </div>
+            </section>
+        </main>
+
+        <footer class="mt-12 text-center text-slate-500 text-sm">
+            Built with FastAPI & OpenAI Whisper • Offline Transcription
+        </footer>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const uploadSection = document.getElementById('upload-section');
+        const loadingState = document.getElementById('loading-state');
+        const resultsSection = document.getElementById('results-section');
+        const lyricsContainer = document.getElementById('lyrics-container');
+        const downloadLrc = document.getElementById('download-lrc');
+        const downloadTxt = document.getElementById('download-txt');
+
+        // Handle File Selection
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) uploadFile(file);
+        };
+
+        // Drag & Drop
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('bg-blue-500/10'); };
+        dropZone.ondragleave = () => { dropZone.classList.remove('bg-blue-500/10'); };
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-blue-500/10');
+            const file = e.dataTransfer.files[0];
+            if (file) uploadFile(file);
+        };
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadSection.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Transcription failed');
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                alert(err.message);
+                uploadSection.classList.remove('hidden');
+            } finally {
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            lyricsContainer.innerHTML = '';
+            data.lyrics.forEach(line => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-4 p-3 hover:bg-white/5 rounded-lg transition-colors';
+                
+                const [timestamp, ...textParts] = line.split(' ');
+                const text = textParts.join(' ');
+                
+                div.innerHTML = `
+                    <span class="text-blue-400 font-mono text-sm shrink-0 mt-1">${timestamp}</span>
+                    <span class="text-slate-200">${text}</span>
+                `;
+                lyricsContainer.appendChild(div);
+            });
+
+            downloadLrc.href = data.lrc_url;
+            downloadTxt.href = data.txt_url;
+            resultsSection.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

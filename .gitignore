@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+.DS_Store
+uploads/
+outputs/
+mlruns/
+*.mp3
+*.wav
+*.lrc
+*.txt
+.env
